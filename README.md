@@ -10,8 +10,8 @@ Introduction of the project from the report:
 
 In this report, we answered three core questions on the citizen program, FrogID:
 
-- 1. Does the data on species richness of frogs obtained from FrogID accurately predict the known species richness from a previous, expert-derived map across Australia (Cogger, 2018)?
+  1. Does the data on species richness of frogs obtained from FrogID accurately predict the known species richness from a previous, expert-derived map across Australia (Cogger, 2018)?
 
-- 2. How does the number of species (i.e. species richness) recorded by FrogID vary among ecoregions?
+  2. How does the number of species (i.e. species richness) recorded by FrogID vary among ecoregions?
 
-- 3. Is the number of species recorded by FrogID affected by the remoteness of the sampling area?
+  3. Is the number of species recorded by FrogID affected by the remoteness of the sampling area?
