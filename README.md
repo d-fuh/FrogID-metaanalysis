@@ -1,4 +1,4 @@
-# FrogID-metaanalysis
+# FrogID: Meta-analysis Project
 
 This is the first "major" report I wrote for my very first course in modern data analysis for life scientists. As a result, it is very detailed in explaining how graphs work and was written in a tutorial format. By virtue of this flexibility, I was able to employ many different fun plots and tests to play with at the very beginning of my journey in R. Have fun reading it!
 
