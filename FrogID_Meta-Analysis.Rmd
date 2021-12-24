@@ -261,12 +261,12 @@ ggplot(aes(x = econum)) +
     labs(x="Ecoregions") -> Figure_4
         # optional: + ggtitle("Fig. 4  Distribution of Ecoregions in FrogID")
 
-ggsave("distribution_of_ecoregions_frogID.png", width = 6, height = 4)
+ggsave("distribution_of_ecoregions_frogID.png", width = 10, height = 4)
 
 Figure_4
 ```
 
-Note that there are exactly 7 non-trivial types of ecoregions in FrogID. Notice also there is evident under-representation in the groups "Montane Grasslands & Shrublands" and "Tropical & Subtropical Moist Broadleaf Forests" (n=x and n=y respectively; mean ss=?).
+Note that there are exactly 7 non-trivial types of ecoregions in FrogID. Notice also there is evident under-representation in the groups "Montane Grasslands & Shrublands" and "Tropical & Subtropical Moist Broadleaf Forests" (n=5 and n=8 respectively; mean ss=82).
 
 To address the undefined ecoregion, we remove row 172 by:
 ```{r}
@@ -301,7 +301,7 @@ frogid.rpg %>%
 
   # optional: + ggtitle("Fig. 5  Box plot of the number of species across various ecoregions in FrogID")
 
-ggsave("box_plot_nspecies_ecoregion_frogID.png", width = 6, height = 4)
+ggsave("box_plot_nspecies_ecoregion_frogID.png", width = 7, height = 4)
 
 Figure_5
 ```
@@ -326,29 +326,31 @@ sample_size = frogid.rpg %>% group_by(Ecoregion) %>% summarize(num=n())
 # Using sample_size to annotate the upcoming plot:
 frogid.rpg %>%
   left_join(sample_size) %>%
-  mutate(econum = paste0("n=", num)) %>%  
-                      ## Adding sample size of each ecoregion to the x lab
-
+  
+  mutate(econum = paste0("n=", num)) %>% ## Adding sample size of each ecoregion to the x lab
+  
 # Continue with the main plot:
   ggplot(aes(x=econum, y=Species_richness_frogid, fill=Ecoregionp)) +
     geom_violin(width=5, alpha=0.9) +
     geom_boxplot(width=0.2, fill="seashell", size=0.3) + ## Embedding the box plots from Fig. 5
     theme_minimal() +
     theme(legend.title = element_text(size = 10), legend.text = element_text(size = 9)) +
-    scale_fill_discrete(name = "Eco-region") +
-    labs(y= "Species Richness", x = "Eco-region") -> Figure_6
+    scale_fill_discrete(name = "Ecoregion") +
+    labs(y= "Species richness", x = "Ecoregion") -> Figure_6
     # + ggtitle("Fig. 6  Species richness across ecoregions in FrogID, violin plot")
 
-ggsave("violin_plot_nspecies_ecoregion_frogID.png", width = 6, height = 4)
+ggsave("violin_plot_nspecies_ecoregion_frogID.png", width = 11, height = 4)
 
 Figure_6
 ```
+
+***BUG: overlapping violins. How to fix?***
 
 Interactive version:
 
 ```{r}
 library(plotly)
-violin_plot <- ggplotly(Figure_6)
+violin_plot_frogID <- ggplotly(Figure_6)
 htmlwidgets::saveWidget(violin_plot_frogID, file="violin_plot_frogID.html")
 ```
 
@@ -405,7 +407,7 @@ Figure_7 <- ggplot(frogid.rpg, aes(Remoteness, Species_richness_frogid)) + geom_
 
   theme_classic()
 
-ggsave("scatter_plot_frogID.png", width = 6, height = 4)
+ggsave("scatter_plot_frogID.png", width = 10, height = 4)
 
 Figure_7
 ```
