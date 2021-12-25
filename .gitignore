@@ -39,4 +39,4 @@ vignettes/*.pdf
 .Renviron
 
 # plotly htmls
-.html
+*.html
