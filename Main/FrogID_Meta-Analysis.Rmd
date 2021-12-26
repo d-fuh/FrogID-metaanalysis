@@ -48,7 +48,7 @@ The respective *null hypotheses* being tested are:
 
 ## Part B. Environment Set-up
 
-```{r}
+```{r, message=FALSE}
 library(tidyverse)
 ```
 
@@ -76,7 +76,7 @@ We want the data frame to look like:
 
 ...in order to perform the independent t-test in Part F (and to produce appropriate box plots). To do that:
 
-```{r}
+```{r, warning=FALSE}
 # Assigning vectors to store the data type labels (data type == "Cogger" or "FrogID")
 data.type.hal <- vector(mode="character", length=2746)
 data.type.frog <- vector(mode="character", length=576)
@@ -227,7 +227,7 @@ Figure_3b
 
 #### Scatter plot: FrogID ~ Cogger
 
-```{r}
+```{r, message=FALSE}
 ggplot(mergedfrog, aes(x = Species_richness_frogid, y = Species_richness_hal)) + geom_point() + geom_smooth(method="lm") +
   theme_classic() +
   ggtitle("Scatter plot of FrogID species richness with Cogger data as the unique predictor")
@@ -248,7 +248,7 @@ There are two important things to consider first:
 These issues were detected by creating a bar graph counting the number of data in each ecoregion in FrogID:
 
 #### Fig. 4  Distribution of Ecoregions in FrogID
-```{r}
+```{r, message=FALSE}
 # Fix long names of ecoregions
 frogid.rpg <- mutate(frogid.rpg, Ecoregionp = str_wrap(frogid.rpg$Ecoregion, width = 10))
 
@@ -269,8 +269,6 @@ ggplot(aes(x = econum)) +
     labs(x="Ecoregions") -> Figure_4
         # optional: + ggtitle("Fig. 4  Distribution of Ecoregions in FrogID")
 
-ggsave("distribution_of_ecoregions_frogID.png", width = 10, height = 4)
-
 Figure_4
 ```
 
@@ -290,7 +288,7 @@ We can now address Question 2:
 ...by visualising the spread of species richness across different ecoregions. First, using box plot:
 
 #### Fig. 5  Box plot for the number of species across ecoregions in FrogID
-```{r}
+```{r, message=FALSE}
 # Again, throw the sample size data to ggplot:
 sample_size = frogid.rpg %>% group_by(Ecoregion) %>% summarize(num=n())
 
@@ -327,17 +325,18 @@ These suggest that the ANOVA in Part F is likely to return a significant result,
 Additionally, we may visualise the skewness of species richness in each ecoregion directly using a violin plot:
 
 #### Fig. 6  Violin plot of number of species across ecoregions in FrogID, with box plots embedded
-```{r, warning=FALSE}
+```{r, message=FALSE, warning=FALSE}
 # Generates a dataframe, "sample_size", that stores sample sizes for each ecoregion in FrogID:
 sample_size = frogid.rpg %>% group_by(Ecoregion) %>% summarize(num=n())
 
 # Using sample_size to annotate the upcoming plot:
 frogid.rpg %>%
+  
   left_join(sample_size) %>%
 
   mutate(econum = paste0("n=", num)) %>% ## Adding sample size of each ecoregion to the x lab
 
-# Continue with the main plot:
+# Create the violin plot SR across ecoregions:
   ggplot(aes(x=econum, y=Species_richness_frogid, fill=Ecoregionp)) +
     geom_violin(width=5, alpha=0.9) +
     geom_boxplot(width=0.2, fill="seashell", size=0.3) + ## Embedding the box plots from Fig. 5
@@ -351,8 +350,6 @@ ggsave("violin_plot_nspecies_ecoregion_frogID.png", width = 11, height = 4)
 
 Figure_6
 ```
-
-***BUG: overlapping violins. How to fix?***
 
 In conclusion, **we suspect that the means of number of species indeed vary across ecoregions** from the Figures 5 & 6, with the greatest species richness seen in "Tropical & Subtropical Moist Broadleaf Forests", and the lowest species richness in "Deserts & Xeric Shrublands".
 
@@ -373,7 +370,7 @@ Due to the large scale of the remoteness variable, it is difficult to see if the
 
 First, we inspect the frequency histogram of both variables and that of the log-scaled variables to see the change of their location and scale under the transformation:
 
-```{r, warning=FALSE}
+```{r, message=FALSE, warning=FALSE}
 ggplot(frogid.rpg, aes(Remoteness)) + geom_histogram()      # Remoteness distribution in FrogID
 ggplot(frogid.rpg, aes(log10(Remoteness))) + geom_histogram()  # Test if log10 shifts Remoteness to near-normal
 ggplot(cogger.rpg, aes(Remoteness)) + geom_histogram()      # Is Remoteness skewed in Cogger?
@@ -384,7 +381,7 @@ We see that remoteness is skewed towards higher values in FrogID. This is unsurp
 We see that log(Remoteness) has a better (closer to normal) spread than the untransformed data.
 
 We also check if the number of species ("NS") is skewed in FrogID and whether a log-transform is required for NS:
-```{r}
+```{r, message=FALSE}
 ggplot(frogid.rpg, aes(Species_richness_frogid)) + geom_histogram()         # NS distribution in FrogID
 ggplot(frogid.rpg, aes(log10(Species_richness_frogid))) + geom_histogram()  # Test if log10 shifts NS to near-normal
 ggplot(frogid.rpg, aes(sqrt(Species_richness_frogid))) + geom_histogram()   # Test for sqrt transform too
@@ -396,7 +393,7 @@ Since the log transformation improves the spread for remoteness optimally, and t
 
 #### Fig. 7  Scatter plot: Number of species against remoteness (FrogID), log-scaled for both variables
 
-```{r}
+```{r, message=FALSE}
 Figure_7 <- ggplot(frogid.rpg, aes(Remoteness, Species_richness_frogid)) + geom_point() +
 
   scale_x_log10() + scale_y_log10() + ## Scaled data are presented on the following graph *without* changing the axes metrics
@@ -450,7 +447,7 @@ The third question, *“Is the number of species recorded by FrogID affected by 
 1. Normality of the dependent variable (species richness) in each group
 
 Testing the normality of species richness requires their frequency histograms in the two groups:
-```{r, warning=FALSE}
+```{r, message=FALSE}
 ggplot(frogid.rpg, aes(Species_richness_frogid)) + geom_histogram()  #SR in FrogID
 ggplot(cogger.rpg, aes(Species_richness_hal)) + geom_histogram()     #SR in Cogger
 ```
@@ -599,7 +596,7 @@ plot(Frogidsq.ANOVA, which = c(1,2)) #Check homogeneity of variance
 These looks very similar to the log-transformed data. However, one may say the normality is weakened under sqrt-transform and homoskedasticity improved, compared to log-transform.
 
 We can test for homoskedasticity more rigorously using standard variance tests. First, we inspect the distribution of NS in FrogID under both transforms:
-```{r}
+```{r, message=FALSE}
 ggplot(frogid.rpg, aes(logNS)) + geom_histogram() #logNS in frogID
 ggplot(frogid.rpg, aes(sqNS)) + geom_histogram() #sqNS in frogID
 ```
