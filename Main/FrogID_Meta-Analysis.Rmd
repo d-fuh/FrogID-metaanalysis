@@ -4,8 +4,8 @@ output:
   html_document:
     df_print: paged
 Course: BEES2041 Data Analysis for Life and Earth Sciences
-Edition: 1
-Date: Dec 23, 2021
+Edition: 2
+Date: Dec 26, 2021
 ---
 # Preface
 
@@ -25,7 +25,7 @@ Date: Dec 23, 2021
 
 # Main
 
-## a)	The Questions and the Hypotheses tested
+## Part A. The Questions and the Hypotheses
 
 The questions addressed in this report are the following:
 
@@ -46,29 +46,25 @@ The respective *null hypotheses* being tested are:
 (3) $H_0$: The number of species recorded by FrogID has no statistically significant relationship with the remoteness of the sampling area.
 
 
-## b) Environment set-up
+## Part B. Environment Set-up
 
 ```{r}
 library(tidyverse)
-library(dplyr)
-library(ggplot2)
 ```
 
-## c) Data import & clean-up
+## Part C. Data Import & Clean-up
 
 ### Step 1. Download the required data files: cogger_richness_per_grid.csv, frogid_richness_per_grid.csv.
 
 ### Step 2. Read in the files:
 ```{r}
 cogger.rpg <- read.csv(file = "cogger_richness_per_grid.csv", header = TRUE) # Long-term Cogger data ("Cogger")
-
 frogid.rpg <- read.csv(file = "frogid_richness_per_grid.csv", header = TRUE) # Publicly sourced data ("FrogID")
 ```
-Note: rpg stands for richness per grid.
+Note: "rpg" stands for "richness per grid".
 
-
-### Step 3. Data reorganisation for Question 1, Part D & F ***TO BE EDITED; USING LINEAR REGRESSION INSTEAD***
-
+### Step 3. Data reorganisation
+#### 3-1. Independent sample t-test
 We want the data frame to look like:
 
 | Species_richness ("SR") | Data set where SR was drawn from |
@@ -79,12 +75,13 @@ We want the data frame to look like:
 | ...                     | ...                              |
 
 ...in order to perform the independent t-test in Part F (and to produce appropriate box plots). To do that:
+
 ```{r}
 # Assigning vectors to store the data type labels (data type == "Cogger" or "FrogID")
 data.type.hal <- vector(mode="character", length=2746)
 data.type.frog <- vector(mode="character", length=576)
 
-# Prepare to label each SR entry with its data file type by completing the vectors with their respective strings:
+# Prepare to label each SR entry with its data file type by completing the vectors with their respective strings
 for(j in 0:2745){
   data.type.hal[j+1] = "Cogger"
 }
@@ -128,21 +125,28 @@ view(SR.type.both)  ## Check format
 
 Finally, the new data frame (SR.type.both) now allows us to run an independent samples t-test on, as seen in Part F.
 
+#### 3-2. Simple linear regression
 
-## d) Graphing and Visualisation
+We can make things simpler by joining the two datasets by their unique grid ID (for each recording):
+
+```{r}
+# datasets = cogger.rpg and frogid.rpg
+# join by variable grid_id
+
+mergedfrog <- merge(cogger.rpg, frogid.rpg, by = c("grid_id", "lon", "lat", "Remoteness", "aus_coastline", "Ecoregion"))
+mergedfrog <- rename(mergedfrog, number_of_samples_frogid = Number_of_samples)
+view(mergedfrog) ## checking format etc
+```
+
+We can then perform linear regression on the merged data set, as seen in Part F.
+
+## Part D. Graphing and Visualisation
 
 In the following section, we generate graphs that each address different aspects of our questions at hand.
 
-### Question 1: See Fig. 1, 2, 3a, 3b ***TO BE EDITED; USING LINEAR REGRESSION INSTEAD***
+### Question 1
 
 > "Does the data on species richness of frogs in a grid cell obtained from FrogID accurately predict the known species richness from previous expert data sets by Dr. Cogger (2018)?"
-
-The questions asks whether FrogID species richness accurately "predict" the well-documented species richness data by Dr. Cogger. In this report, to measure the accuracy of prediction, we examine how closely the two sample means in FrogID and Cogger species richness match statistically.
-
-Since species richness is a single continuous variable, and we're trying to measure to what level do FrogID species richness predict Cogger, the idea of creating a scatter plot using species richness in both datasets and measuring its R-square is tempting. However, since the number of observations for species richness differs in FrogID and Cogger (N=2746 for Cogger and 577 for FrogID), we cannot find a number n, to generate a scatter plot with n points representing species richness in the two data sets.
-
-Therefore, we will use more feasible and visually expressive approaches to show the relationship of FrogID species richness and Cogger: In the following, we generate a series of box plot, *overlapping density plot*, and two bar graphs to compare which presentation is the most suitable for examining how well the predictor (species richness in FrogID) matches the response (species richness in Cogger), and which graphs and the fittest to address our question at hand, given the criterion of accurate prediction.
-
 
 First, we use a box plot to contrast the location and spread of the two data sets:
 
@@ -171,9 +175,6 @@ Figure_2 <- ggplot(data=SR.type.both, aes(x=Species_richness, group=Data_from, f
 
 Figure_2
 ```
-
-From the graph, we see that the density of species richness in FrogID does resemble the Cogger data. Notice the two modes are distinct with little overlaps. **We suspect the true means in two groups are statistically different.** Based on our measure of accuracy of prediction (by matching sample means), this provides modest evidence against FrogID species richness accurately predicting Cogger species richness. However, further analyses are required.
-
 
 #### Fig. 3  Bar plots: Species richness in FrogID vs. Cogger, with a) standard error bars or b) 95% confidence intervals
 
@@ -208,24 +209,31 @@ Generating the bar plots:
 ##  Notice the sample sizes differ in Cogger (N=2746) and FrogID (N=577)
 Figure_3a <- ggplot(SR.barplot, aes(x = Data_type, y = Mean)) +
   geom_col(width=0.6, fill="skyblue", alpha=0.7) +
-  geom_errorbar( aes(x=Data_type, ymin=Mean-Se, ymax=Mean+Se), width=0.3, colour="orange", alpha=0.9, size=1.3) +
-  ggtitle("Fig. 3a  Bar plot for species richness in FrogID vs. Cogger, \n with standard errors")
+  geom_errorbar( aes(x=Data_type, ymin=Mean-Se, ymax=Mean+Se), width=0.2, colour="orange", alpha=0.9, size=1.3) +
+  theme(aspect.ratio = 2/1) +
+  ggtitle("Fig. 3a  Bar plot of species richness in FrogID vs. Cogger (standard error)")
 
 Figure_3a
 
 #Graphing the bar plot, with 95% CIs (in Forest green)
 Figure_3b <- ggplot(SR.barplot, aes(x = Data_type, y = Mean)) +
   geom_col(width=0.6, fill="forestgreen", alpha=0.7) +
-  geom_errorbar( aes(x=Data_type, ymin=Mean-ic, ymax=Mean+ic), width=0.3, colour="orange", alpha=0.9, size=1.3) +
-  ggtitle("Fig. 3b  Bar plot for species richness in FrogID vs. Cogger, \n with 95% confidence intervals")
+  geom_errorbar( aes(x=Data_type, ymin=Mean-ic, ymax=Mean+ic), width=0.2, colour="orange", alpha=0.9, size=1.3) +
+  theme(aspect.ratio = 2/1) +
+  ggtitle("Fig. 3b  Bar plot of species richness in FrogID vs. Cogger (95% CI)")
 
 Figure_3b
 ```
 
-We see that the means differ quite significantly in FrogID and Cogger. We see that there is visably larger variance in FrogID from both figures, which might be due to its relatively smaller sample size. **We suspect FrogID does not accurately predict Cogger species richness according to our criterion, given the overall large sample sizes in both datasets** (N=2746 for Cogger, N=577 for FrogID). We will verify this conjecture in Part F, Question 1.
+#### Scatter plot: FrogID ~ Cogger
 
-***TO BE EDITED; USING LINEAR REGRESSION INSTEAD -- END***
+```{r}
+ggplot(mergedfrog, aes(x = Species_richness_frogid, y = Species_richness_hal)) + geom_point() + geom_smooth(method="lm") +
+  theme_classic() +
+  ggtitle("Scatter plot of FrogID species richness with Cogger data as the unique predictor")
 
+ggsave("scatter_plot_frogID~Cogger.png", width = 10, height = 4)
+```
 
 ### Question 2:
 
@@ -326,9 +334,9 @@ sample_size = frogid.rpg %>% group_by(Ecoregion) %>% summarize(num=n())
 # Using sample_size to annotate the upcoming plot:
 frogid.rpg %>%
   left_join(sample_size) %>%
-  
+
   mutate(econum = paste0("n=", num)) %>% ## Adding sample size of each ecoregion to the x lab
-  
+
 # Continue with the main plot:
   ggplot(aes(x=econum, y=Species_richness_frogid, fill=Ecoregionp)) +
     geom_violin(width=5, alpha=0.9) +
@@ -345,14 +353,6 @@ Figure_6
 ```
 
 ***BUG: overlapping violins. How to fix?***
-
-Interactive version:
-
-```{r}
-library(plotly)
-violin_plot_frogID <- ggplotly(Figure_6)
-htmlwidgets::saveWidget(violin_plot_frogID, file="violin_plot_frogID.html")
-```
 
 In conclusion, **we suspect that the means of number of species indeed vary across ecoregions** from the Figures 5 & 6, with the greatest species richness seen in "Tropical & Subtropical Moist Broadleaf Forests", and the lowest species richness in "Deserts & Xeric Shrublands".
 
@@ -417,33 +417,35 @@ We first notice there is certain "stripe-ness" in the number of species versus r
 Overall, the linear smoother detected a negative trend in species richness over remoteness: That is, there is an association of lower species richness (i.e. less number of species found/observed) in areas with increasing remoteness. To measure the strength of this association, we will provide detailed analyses in Part F, Question 3.
 
 
-## e) Analytical methods
+## Part E. Analytical methods
 
-The first question, *“Does the data on species richness of frogs in a grid cell obtained from FrogID accurately predict the known species richness from previous expert data sets by Dr. Cogger?”*, was analysed using an **independent samples t-test**, in which we test for whether the difference between the sample mean of species richness from FrogID and that of the Cogger data is significantly non-zero. We assume that a significant difference means the prediction made by FrogID species richness to Cogger data was inaccurate.
+### E-1.
+The first question, *“Does the data on species richness of frogs in a grid cell obtained from FrogID accurately predict the known species richness from previous expert data sets by Dr. Cogger?”*, was initially approached using an **independent samples t-test**, in which we test for whether the difference between the sample mean of species richness from FrogID and that of the Cogger data is significant. This only served as a weak estimate to how close the two datasets match prior to our subsequent linear analysis.
 
-Test assumptions required for the independent samples t-test, namely normality and homogeneity of variance, were tested using a combination of box plots and histograms of species richness in the two data sets, the Shapiro-Wilk test for normality, Normal Q-Q plots, and the Fligner-Killeen test. The independent t-test was conducted for the species richness data in FrogID and Cogger data sets. Welch approximation was used for the independent t-test as heteroskedasticity was detected in the species richness data. The test results were summarised in Table 1.
+> Test assumptions required for the independent samples t-test, namely normality and homogeneity of variance, were tested using a combination of box plots and histograms of species richness in the two data sets, the Shapiro-Wilk test for normality, Normal Q-Q plots, and the Fligner-Killeen test. The independent t-test was conducted for the species richness data in FrogID and Cogger data sets. Welch approximation was used for the independent t-test as heteroskedasticity was detected in the species richness data. The test results were summarised in Table 1.
 
+Linear analysis: A simple linear model
 
+    lm: FrogID species richness ~ Cogger species richness
+
+...was performed. The merged dataset contains species richness data from both datasets joined by their unique grid ID for every matching recording (See Part C for details). The significance of this model was then measured to evaluate how well the long-term Cogger data predicts FrogID species richness from the project.
+
+### E-2.
 The second question, *“How does the number of species recorded by FrogID vary among ecoregions?”*, was analysed using the **Analysis of Variance (ANOVA)** on the log-number of species (a continuous response variable) against ecoregions (a well-defined categorical predictor) in FrogID.
 
-Assumptions required for ANOVA were tested using standard residual analyses, including histograms of residuals, the residuals versus fitted values ("residuals-fits") plot, and the normal Q-Q plot from the ANOVA model. An additional Fligner-Killeen test was performed to check for homogeneity of variance quantitatively. The variable *number of species* was transformed using the log base 10 function to produce appropriate data properties for ANOVA. ANOVA was conducted on log-transformed number of species by ecoregions in FrogID. The key statistics from the ANOVA model were summarised in Table 2. Tukey's HSD test was performed post hoc to specify the exact groups of ecoregions between which the means of number of species differ significantly, and was summarised in Table 3. The significant groups, and groups returning the largest differences, were further summarised in Table 4 and Table 5, respectively.
+> Assumptions required for ANOVA were tested using standard residual analyses, including histograms of residuals, the residuals versus fitted values ("residuals-fits") plot, and the normal Q-Q plot from the ANOVA model. An additional Fligner-Killeen test was performed to check for homogeneity of variance quantitatively. The variable *number of species* was transformed using the log base 10 function to produce appropriate data properties for ANOVA. ANOVA was conducted on log-transformed number of species by ecoregions in FrogID. The key statistics from the ANOVA model were summarised in Table 2. Tukey's HSD test was performed post hoc to specify the exact groups of ecoregions between which the means of number of species differ significantly, and was summarised in Table 3. The significant groups, and groups returning the largest differences, were further summarised in Table 4 and Table 5, respectively.
 
-
+### E-3.
 The third question, *“Is the number of species recorded by FrogID affected by the remoteness of the sampling area?”*, was tested using a **simple linear regression model with log-transformed variables** on the number of species by remoteness of a grid cell ("remoteness") in FrogID. The variables were transformed using the log base 10 function to improve the linear correlation and to rectify data compliance to test assumptions. Residual analyses, including inspection of histograms of residuals, residual-fits and normal Q-Q plots, were performed to confirm that the transformed data are in collaboration with assumptions for linear models. The key statistics from the linear model were summarised in Table 6. The fitted equation was presented thereafter, including its exponential (non-linear) form.
 
 
-Note: The "tables" are in an informal sense and are simply summaries of the tests compiled by R. These can be easily called by the codes included in Part F. The tables and their locations are indexed in the #Tables & Figures section at the end of the notebook as well as in the navigation panel in R notebook.
+## Part F. Formal Analysis
 
+### Question 1: Independent samples t-test + Linear regression
 
-## f) Formal Analysis
+> Does the species richness data obtained from **FrogID** accurately predict the known species richness from previous expert datasets by Dr. **Cogger**?
 
-### Question 1: Independent samples t-test ***TO BE EDITED***
-
-#### Recaptulating the question:
-
-> Does the data on *species richness* of frogs in a grid cell ("SR") obtained from **FrogID** accurately predict the known species richness from previous expert data sets by Dr. **Cogger**?
-
-#### Test assumptions:
+#### F-1-1. Test assumptions for t-test
 
 1. Normality of the dependent variable (species richness) in each group
 
@@ -465,7 +467,7 @@ shapiro.test(SR.frog) #Species richness, FrogID
 The Shapiro-Wilk test tells us that the distribution of species richness in both datasets are (almost surely) not normal. However, it has been proposed that Shapiro-Wilks over-represents deviance from normality for large samples (See for example https://stats.stackexchange.com/questions/2492/is-normality-testing-essentially-useless). Considering the larger sample sizes of both Cogger and FrogID (N=2746 and 577 respectively), we turn to normal Q-Q plots to assess normality:
 
 ```{r}
-#Normal Q-Q plot: Observe fit of the straight line for normality
+# Normal Q-Q plot: Observe fit of the straight line for normality
 qqnorm(SR.hal); qqline(SR.hal) ## Cogger
 qqnorm(SR.frog); qqline(SR.frog) ## FrogID
 ```
@@ -492,39 +494,41 @@ fligner.test(Species_richness ~ Data_from, SR.type.both)
 ```
 We obtained a p-value < 0.05 suggesting that the variances are significantly different in two groups (Cogger & FrogID). We consider the assumption of homogeneity of variance violated, and we proceed with the independent t-test with Welch approximation.
 
-
-#### Restating the alternative hypothesis:
-
-> HA: Sample mean of species richness from FrogID differs from the previous datasets, i.e. Cogger data.
-
-Notice this is a **two-tailed hypothesis**.
-
-#### Conducting the test:
-
-##### Table 1.  Independent t-test of species richness from FrogID vs. Cogger, with Welch approximation
+##### Table 1a.  Independent t-test of species richness from FrogID vs. Cogger, with Welch approximation
 ```{r}
-t.test(Species_richness ~ Data_from, data = SR.type.both, alternative = "two.sided", var.equal = F) -> Table_1
-Table_1
+# Two-tailed hypothesis
+t.test(Species_richness ~ Data_from, data = SR.type.both, alternative = "two.sided", var.equal = F) -> Table_1a
+Table_1a
 ```
-The interpretation of the results is in Part G, Question 1.
+The interpretation of the results is documented in Part G, Question 1.
 
-***TO BE EDITED -- END***
+#### F-1-2. Linear model
+```{r}
+# FrogID species richness ~ Cogger species richness (slm)
+sr.lm <- lm(Species_richness_frogid ~ Species_richness_hal, data=mergedfrog)
+Table_1b <- summary(sr.lm)
+```
+
+##### Table 1b. Linear model FrogID ~ Cogger
+```{r}
+Table_1b
+```
 
 ### Question 2: One-way ANOVA
 
-#### Restating the question:
+#### F-2-1. Restating the question:
 
 > How does the *number of species* (**species richness**) (NS) recorded by **FrogID** vary among *ecoregions*?
 
 
-#### Conducting an a priori test in order to check for assumptions:
+#### F-2-2. Conducting an a priori test in order to check for assumptions:
 
 ```{r}
 # Creates an object for the following assumption checks on the original FrogID data
 Frogid.ANOVA <- aov(Species_richness_frogid ~ Ecoregion, data = frogid.rpg)
 ```
 
-#### Test assumptions:
+#### F-2-3. Test assumptions for ANOVA:
 
 1. Normality of residuals
 
@@ -552,7 +556,7 @@ Observations:
 Both (1) and (2) suggest that the homogeneity of variance is not strongly established --- The distribution of residuals is not uniform across ecoregions. We need to transform the data.
 
 
-#### Data transformation:
+#### F-2-4. Data transformation:
 
 ##### 1. Using log10
 ```{r}
@@ -610,7 +614,7 @@ We obtained two p-values both << 0.05 which is highly significant. This suggests
 We may bypass this issue by using a non-parametric test instead of ANOVA, or find a better transformation that will transform our species richness data to normal with respect to ecoregions. However, that is beyond the scope of this report, and we carry on assuming constant variance within groups by using the log-transform.
 
 
-#### Conducting the formal test: Using the log-transformed variable, logNS
+#### F-2-5. Conducting the formal ANOVA: Using log-transformed variable, logNS
 
 The one-way ANOVA was previously performed using log-transformed Number of Species. We can now summarise the model with:
 
@@ -702,12 +706,9 @@ Detailed interpretation of these results are presented in Part G, Question 2.
 
 ### Question 3: Simple linear regression
 
-#### Recaptulating the question:
-
 > "Is the *number of species* (NS) recorded by **FrogID** affected by the *remoteness* of the sampling area?"
 
-
-#### A priori linear model for assumption testing:
+#### F-3-1. A priori linear model for assumption testing:
 ```{r}
 frogid.lm <- lm(Species_richness_frogid ~ Remoteness, data = frogid.rpg) #Linear model of NS ~ Remoteness using original data
 
@@ -718,7 +719,7 @@ Frogidlog.lm <- lm(logNS ~ logR, data = frogid.rpg) #Linear model using log-tran
 ## NB: logNS was previously assigned to frogid.rpg in Part F, Q2
 ```
 
-#### Test assumptions:
+#### F-3-2. Test assumptions:
 
 1. Linearity
 
@@ -753,7 +754,7 @@ plot(Frogidlog.lm, which = 2) # Normal Q-Q, log-transformed data
 The normal Q-Q plots reflect what we have just seen in the histogram of residuals: The close match of Q-Q desired for normality of residuals is evident under log transformation, while it is heavily skewed in the original. We conclude that the normality of residuals assumption is well-met using the log-transformed data.
 
 
-#### Summary of the linear model: Number of species ~ Remoteness in FrogID
+#### F-3-3. Summary of the linear model: Number of species ~ Remoteness in FrogID
 ```{r}
 summary(frogid.lm)
 ```
@@ -761,7 +762,7 @@ summary(frogid.lm)
 The results suggest that while there is a significant linear relationship between the number of species and remoteness, the F ratio is low (F=82.57) --- We suspect that the significance was largely due to the large degrees of freedom in FrogID (df=574). We will see immediately that the linearity of their relationship is improved under the log transform.
 
 
-#### Summary of the linear model: log(Number of species) ~ log(Remoteness) in FrogID
+#### F-3-4. Summary of the linear model: log(Number of species) ~ log(Remoteness) in FrogID
 
 We've previously established in Part D, Question 3 that the untransformed number of species vs. remoteness has a rather obscure linear relationship on a scatter plot. We have also shown that linearity is improved if we transform both variables using log10. We then showed previously that the assumptions for linear models are violated if we use the untransformed data instead of log-transformed variables.
 
@@ -775,7 +776,7 @@ summary(Frogidlog.lm)
 We see that the significance is established in both models, under log transformation of both variables or not. We also see that the F-ratio has increased by about two-fold (F=166.5 compared to 82.57 in the previous model), with R-squared raised to a more meaningful level compared to the original (R-squared=0.2249 compared to 0.1258 in the previous model).
 
 
-#### Fitted equation from lm: log(Number of species) ~ log(Remoteness) in FrogID
+#### F-3-5. Fitted equation from lm: log(Number of species) ~ log(Remoteness) in FrogID
 
 ```{r}
 format(coef(Frogidlog.lm)[1], digits = 3) -> a
@@ -794,37 +795,37 @@ print(paste("Non-linear eqn: Number of species in Frog ID = ", A, "*Remoteness ^
 More detailed interpretation is presented in Part G, Question 3.
 
 
-## g) Discussion-Interpretation
+## Part G. Discussion
 
-### The first question
+### G-1. The first question
 
 > “Does the data on species richness of frogs in a grid cell obtained from FrogID accurately predict the known species richness from previous expert data sets by Dr. Cogger (2018)?”
 
-It should be first noted that we arbitrarily assumed normality of the species richness data in both data sets (FrogID & Cogger) despite significant results of departure from normality were obtained from various tests. Welch approximation was used for the independent t-test due to suspected heteroskedasticity of the species richness data. The p-value for the independent t-test was near zero (P < 2.2e-16; Table 1), and therefore the alternative hypothesis was accepted: We conclude that there is strong evidence showing that *almost surely* the true difference for the sample means of species richness obtained from FrogID and that from the Cogger data is non-zero.
+It should be first noted that we arbitrarily assumed normality of the species richness data in both data sets (FrogID & Cogger) despite significant results of departure from normality were obtained from various tests. Welch approximation was used for the independent t-test due to suspected heteroskedasticity of the species richness data. The p-value for the independent t-test was near zero (P < 2.2e-16; Table 1a), and therefore the alternative hypothesis was accepted: We conclude that there is strong evidence showing that *almost surely* the true difference for the sample means of species richness obtained from FrogID and that from the Cogger data is non-zero.
 
-Based on our criterion for accuracy of prediction, the test result provides strong evidence for FrogID species richness not  predicting Cogger species richness.  This finding is supported by the overlapping density plots (Fig. 2) and bar plots of the species richness data (Fig. 3a & 3b).  This however is **inconsistent** with the finding by Callaghan et al. where it was concluded that “there was still strong evidence of FrogID species richness predicting Cogger species richness”. [REF 1]
+Both the overlapping density plot (Fig. 2) and the bar plots of species richness data (Fig. 3a & 3b) show significant deviation between the Cogger and FrogID species richness recording.  Callaghan et al. has shown that “there was strong evidence of FrogID species richness predicting Cogger species richness”.^[REF 1] This is supported by our linear model (P < 2.2e-16; Table 1b). Note the predictor/response variables were shuffled as we exploited the symmetry a little here.
 
-In the paper, Callaghan et al. employed a different approach to assess the accuracy of prediction by FrogID.  They had  conducted additional meta-analyses on the relative difference between FrogID and Cogger datasets whereas here, only the first-level difference was analysed using Student's t-test. In comparison, there are several caveats in the t-test approach used in this report for evaluating the accuracy of prediction by FrogID, mainly surrounding how exactly should we quantify the "accuracy” of prediction by FrogID to the Cogger species richness. We propose that the accuracy of prediction needs be more rigorously defined for this question in order to build a more powerful model for its assessment.
+We must note that Callaghan et al. conducted additional meta-analyses on the relative difference between FrogID and Cogger datasets whereas here, only a superficial level of "difference" between sample means were analysed using Student's t-test. In comparison, there are several caveats in our t-test approach to evaluate the accuracy of prediction by FrogID, which mainly surrounds how we should define the "accuracy of prediction" by Cogger species richness data. We propose that this particular question needs be more rigorously defined in order to build a more powerful model for its assessment.
 
 
-### The Second question
+### G-2. The Second question
 
 > “How does the number of species recorded by FrogID vary among ecoregions?”
 
 The near-zero p-value from ANOVA (P < 2e-16; Table 2) leads to rejection of our null hypothesis, providing very strong evidence for a significant difference in means of (log-transformed) number of species in at least two different ecoregions in FrogID.
 
-We see from the Tukey’s HSD test that species richness varies across ecoregion almost always significantly --- The only exception being the Montane Grasslands & Shrublands group, from which insufficient samples (N=5) were drawn. Remarkably, all of the above findings are consistent with previous observation on the box plot with jitters of number of species across ecoregions in FrogID (Fig. 5). We conclude that the number of species recorded by FrogID does indeed vary among ecoregions; In particular, the mean of number of species is worth-notingly higher in Tropical & Subtropical Moist Broadleaf Forests, but only significantly higher in Temperate Broadleaf & Mixed Forests when sample size effect is considered; In contrast, the number of species is significantly lower in Deserts & Xeric Shrubland compared to other ecoregions (Table 4 & 5), according to the recordings of FrogID. The underlying ecological explanation for this is beyond the scope of this report.
+We see from the Tukey’s HSD test that species richness varies across ecoregion almost always significantly --- The only exception being the Montane Grasslands & Shrublands group, from which insufficient samples (N=5) were drawn. Remarkably, all of the above findings are consistent with previous observation on the box plot with jitters of number of species across ecoregions in FrogID (Fig. 5). We conclude that the number of species recorded by FrogID does indeed vary among ecoregions; In particular, the mean of number of species is worth-noting-ly higher in Tropical & Subtropical Moist Broadleaf Forests, but only significantly higher in Temperate Broadleaf & Mixed Forests when sample size effect is considered; In contrast, the number of species is significantly lower in Deserts & Xeric Shrubland compared to other ecoregions (Table 4 & 5), according to the recordings of FrogID. The underlying ecological explanation for this is beyond the scope of this report.
 
 
-### The Third question
+### G-3. The Third question
 
 > “Is the number of species recorded by FrogID affected by the remoteness of the sampling area?”
 
-The near-zero P-values from the the linear model logNS~logR (P < 2e-16 for both coefficients; Table 6) suggests that there is a significant linear relationship between log-number of species and log-remoteness in FrogID. From the fitted equation we obtained the exponentiated relation:
+The near-zero P-values from the the linear model logNS ~ logR (P < 2e-16 for both coefficients; Table 6) suggests that there is a significant linear relationship between log-number of species and log-remoteness in FrogID. From the fitted equation we obtained the exponentiated relation:
 
     Number of species in Frog ID =  59.2 *Remoteness ^ -0.493
 
-This tells us that about a 0.49% decrease in the number of species occurs for every 1% increase in remoteness in FrogID^[FOT 4]. The R-squared for the model logNS~logR, which uses only one predictor variable, was moderate (R2=0.2249). This suggests that there may be other lurking variables affecting the number of species recorded by FrogID other than remoteness. In conclusion, we conclude that the number of species recorded by FrogID is indeed affected by the remoteness of the sampling area negatively.
+This tells us that about a 0.49% decrease in the number of species occurs for every 1% increase in remoteness in FrogID^[FOT 4]. The R-squared for the model logNS ~ logR, which uses only one predictor variable, was moderate (R2=0.2249). This suggests that there may be other lurking variables affecting the number of species recorded by FrogID other than remoteness. In conclusion, we conclude that the number of species recorded by FrogID is indeed affected by the remoteness of the sampling area negatively.
 
 
 
@@ -839,16 +840,18 @@ This tells us that about a 0.49% decrease in the number of species occurs for ev
 ***Fig. 1***   Box plot of species richness in FrogID vs Cogger (D-1)  
 ***Fig. 2***   Density plots of SR(FrogID) and SR(Cogger), overlapped (D-1)  
 ***Fig. 3a***  Bar plot for SR in FrogID vs. Cogger, with respective standard errors (D-1)  
-***Fig. 3b***  Bar plot for SR in FrogID vs. Cogger, with respective 95% confidence intervals (D-1)  
+***Fig. 3b***  Bar plot for SR in FrogID vs. Cogger, with respective 95% confidence intervals (D-1)
+***Additional figure*** Scatter plot of SR in FrogID vs Cogger, untransformed (D-1)
 ***Fig. 4***   Histogram of Ecoregions in FrogID (D-2)  
 ***Fig. 5***   Box plot of species richness across ecoregions in FrogID, with jitters (D-2)  
 ***Fig. 6***   Violin plot of number of species across ecoregions in FrogID, with box plots embedded (D-2)  
 ***Fig. 7***   Scatter plot of log-number of species vs. log-remoteness in FrogID (D-3)  
 
 
-**Table 1.** Independent t-test of species richness from FrogID vs. Cogger, with Welch approximation (F-1)  
-**Table 2.** Summary of ANOVA: logNS~Ecoregion, FrogID (F-2)  
-**Table 3.** Tukey’s HSD for ANOVA: logNS~Ecoregion, FrogID (F-2)  
+**Table 1a.** Independent t-test of species richness from FrogID vs. Cogger, with Welch approximation (F-1)  
+**Table 1b.** Linear model of species richness from FrogID over Cogger, joined by grid ID (F-1)
+**Table 2.** Summary of ANOVA: logNS~Ecoregion, FrogID (F-2)
+**Table 3.** Tukey’s HSD for ANOVA: logNS~Ecoregion, FrogID (F-2)
 **Table 4.** Summary of Significant Groups from Tukey’s HSD in Q2 (F-2)  
 **Table 5.** Summary of Large-difference Groups from Tukey’s HSD in Q2 (F-2)    
 **Table 6.** Summary of the linear model log(NS)~log(Remoteness), FrogID in Q3 (F-3)  
